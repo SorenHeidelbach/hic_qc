@@ -9,7 +9,7 @@ The most informative Hi-C reads are the ones that are long-distance contacts, or
 Hi-C connectivity drops off in approximately a power-law with increasing linear sequence distance. Consequently, one expects Hi-C reads to follow a characteristic distribution, wherein there is a spike of many read pairs at distances close to zero, which drops off smoothly (in log space) with increasing distance. If there are odd spikes or discontinuities, or if there are few long-distance contacts, there may be a problem either with the library or the assembly.
 
 ## Dependencies
-* python 3.6
+* python
 * numpy
 * pysam
 * matplotlib
@@ -24,36 +24,12 @@ To install using conda, run the following commands in sequence (assumes you alre
 ```
 git clone https://github.com/phasegenomics/hic_qc.git
 cd hic_qc/
-conda env create -n hic_qc --file env.yml
+conda env create -n hic_qc --file env.minimal.yml
 conda activate hic_qc
-python setup.py install --user
+pip install --no-deps -e .
 ```
 
-This will create a python 3.6 environment and automatically install the `wkhtmltopdf` dependency. You may need to run a `conda init` command to set up your shell if you haven't previously initialized conda in your shell.
-
-To use a different python version, run:
-```
-conda --add channels bioconda --add channels conda-forge
-conda create -q -n hic_qc python=$PYTHON_VERSION pysam numpy scipy matplotlib wkhtmltopdf pdfkit markdown
-conda activate hic_qc
-python setup.py install --user
-```
-
-### Pip installation
-For installation using pip, run this statement in a terminal:
-
-```
-git clone https://github.com/phasegenomics/hic_qc.git
-cd hic_qc
-pip install --user -r requirements.txt
-python setup.py install --user
-```
-
-We include a `requirements.txt` file with dependencies, which should be installed if you use the above command. However, if you want to use the PDF report feature of this tool, you will need to install `wkhtmltopdf` externally, as we cannot install this readily.
-
-This script has been verified on MacOSX, Ubuntu Linux, and Amazon Linux.
-
-Some dependencies such as matplotlib don't play nicely with all pythons, such that some pythons in e.g. virtualenvs may not work. In that specific case you can just deactivate the virtualenv.
+You may need to run a `conda init` command to set up your shell if you haven't previously initialized conda in your shell.
 
 ## Usage
 In the most basic use-case, you can run the script in a terminal

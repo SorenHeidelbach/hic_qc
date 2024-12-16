@@ -9,32 +9,31 @@
 # creates files in the working directory with relevant plots, also text files of statistics.
 # flip -r flag  (assuming you have dependencies) to make a PDF report with everything together.
 
-from __future__ import print_function
-from __future__ import division
-
-import sys
-import pysam
-import numpy as np
 import argparse
-import os
-import filecmp
-import logging
-import matplotlib
 from collections import Counter
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import pdfkit
+import filecmp
+import importlib.metadata
+import logging
 import markdown as md
-from scipy import optimize
+import os
 import re
+import sys
 
-from _version import get_versions
-__version__ = get_versions()['version']
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pdfkit
+import pysam
+from scipy import optimize
 
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
+
+matplotlib.use('Agg')
+HICQC_VERSION = importlib.metadata.version('hic_qc')
+
+#try:
+#    FileNotFoundError
+#except NameError:
+#    FileNotFoundError = IOError
 
 # default QC thresholds if there is no thresholds file
 DEFAULT_MIN_SAME_STRAND_HQ_PERCENTAGE           =   0.015
@@ -92,6 +91,9 @@ class HiCQC(object):
         self.sample_type = sample_type.lower()
         self.qc_purpose = 'Unknown'
         self.lib_enzyme = lib_enzyme if lib_enzyme is not None else ['undefined']
+        self.ref_assembly = "reference assembly not found"
+        self.fwd_hic_reads = "forward Hi-C reads not found"
+        self.rev_hic_reads = "reverse Hi-C reads not found"
 
         if self.sample_type == 'metagenome':
             self.qc_purpose = 'Metagenome Deconvolution'
@@ -306,9 +308,6 @@ class HiCQC(object):
                 self.bwa_command = re.search(r'(bwa-mem2 )[^//]*', self.bwa_command_line).group()
             else:
                 self.bwa_command = re.search(r'(bwa )[^//]*', self.bwa_command_line).group()
-            self.ref_assembly = "reference assembly not found"
-            self.fwd_hic_reads = "forward Hi-C reads not found"
-            self.rev_hic_reads = "reverse Hi-C reads not found"
             bwa_command_elements = self.bwa_command_line.split()
             full_fwd_reads = None
             full_rev_reads = None
@@ -915,7 +914,7 @@ class HiCQC(object):
         self.out_stats['many_unmapped_reads_html'] = self.many_unmapped_reads_html.format(self.out_stats['perc_unmapped_reads'])
         self.out_stats['many_zero_mapq_reads_html'] = self.many_zero_mapq_reads_html.format(self.out_stats['perc_mapq0_reads'])
 
-        self.out_stats['version'] = __version__
+        self.out_stats['version'] = HICQC_VERSION
 
     def log_stats(self, count_diff_refname_stub=False):
         '''Log statistical summary.
@@ -941,21 +940,21 @@ class HiCQC(object):
         self.logger.info(self.out_stats['total_length'])
 
         self.logger.info('Counts of zero distances (many is a sign of bad prep):')
-        self.logger.info('{} of total {} {}%'.format(
+        self.logger.info('{} of total {} {}'.format(
               self.out_stats['zero_dist_pairs'],
               self.out_stats['total_read_pairs'],
               self.out_stats['perc_zero_dist_pairs'])
               )
 
         self.logger.info('Count of same-contig read pairs with distance > 10KB (many is a sign of good prep):')
-        self.logger.info('{} of total {} {}%'.format(
+        self.logger.info('{} of total {} {}'.format(
               self.out_stats['pairs_greater_10k'],
               self.out_stats['total_read_pairs'],
               self.out_stats['perc_pairs_greater_10k'])
               )
 
         self.logger.info('Proportion of reads mapping to contigs > 10 Kbp with inserts > 10 Kbp:')
-        self.logger.info('{} of total {} {}%'.format(
+        self.logger.info('{} of total {} {}'.format(
               self.out_stats['pairs_greater_10k_on_contigs_greater_10k'],
               self.out_stats['pairs_on_contigs_greater_10k'],
               self.out_stats['perc_pairs_greater_10k_on_contigs_greater_10k'])
@@ -963,21 +962,21 @@ class HiCQC(object):
 
         self.logger.info('Count of read pairs with mates mapping to different chromosomes/contigs ' \
                          '(sign of good prep IF same genome):')
-        self.logger.info('{} of total {} {}%'.format(
+        self.logger.info('{} of total {} {}'.format(
               self.out_stats['intercontig_pairs'],
               self.out_stats['total_read_pairs'],
               self.out_stats['perc_intercontig_pairs'])
               )
 
         self.logger.info('Count of split reads (more is usually good, as indicates presence of Hi-C junction in read):')
-        self.logger.info('{} of total {} {}%'.format(
+        self.logger.info('{} of total {} {}'.format(
               self.out_stats['split_reads'],
               self.stats['total_reads'],
               self.out_stats['perc_split_reads'])
               )
 
         self.logger.info('Count of MAPQ zero reads (bad, ambiguously mapped):')
-        self.logger.info('{} of total {} {}%'.format(
+        self.logger.info('{} of total {} {}'.format(
               self.out_stats['mapq0_reads'],
               self.out_stats['total_reads'],
               self.out_stats['perc_mapq0_reads'])
@@ -985,7 +984,7 @@ class HiCQC(object):
 
         self.logger.info('Count of duplicate reads (-1 if insufficient to estimate; duplicates are bad; ' \
                          'WILL ALWAYS BE ZERO UNLESS BAM FILE IS PREPROCESSED TO SET THE DUPLICATES FLAG):')
-        self.logger.info('{} of total {} {}%'.format(
+        self.logger.info('{} of total {} {}'.format(
               self.out_stats['duplicate_reads'],
               self.out_stats['total_reads'],
               self.out_stats['perc_duplicate_reads'])
@@ -994,7 +993,7 @@ class HiCQC(object):
         if count_diff_refname_stub:
             self.logger.info('Count of read pairs with mates mapping to different reference groupings, ' \
                              'e.g. genomes (sign of bad prep potentially):')
-            self.logger.info('{} of total {} {}%'.format(
+            self.logger.info('{} of total {} {}'.format(
                   self.out_stats['different_ref_stub_pairs'],
                   self.out_stats['total_read_pairs'],
                   self.out_stats['perc_different_ref_stub_pairs'])
@@ -1109,7 +1108,7 @@ def parse_args():
                         help='List of min MQ scores to calculate RP stats for (Default: %(default)s)')
     parser.add_argument('--edist_stats', nargs='+', default=[100, 10, 5, 3, 1, 0],
                         help='List of max edist scores to calculate RP stats for (Default: %(default)s)')
-    parser.add_argument('--version', action='version', version=__version__)
+    parser.add_argument('--version', action='version', version=HICQC_VERSION)
     parser.add_argument('--thresholds', default='{0}/collateral/thresholds.json'.format(os.path.dirname(os.path.realpath(__file__))),
                         help='JSON file containing QC thresholds (Default: %(default)s)')
     parser.add_argument('--sample_type', default='genome', choices=['genome', 'metagenome'],
