@@ -1,6 +1,5 @@
 language: generic
 env:
-  - PYTHON="3.6"
   - PYTHON="default"
 before_install:
     - sudo apt-get update
@@ -10,18 +9,13 @@ before_install:
     - hash -r
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
-    - conda config --add channels bioconda --add channels conda-forge
 install:
   # Useful for debugging any issues with conda
   - conda info -a
   # Replace dep1 dep2 ... with your dependencies
-  - if [[ "$PYTHON" == "default" ]]; then
-      conda env create -n test-environment --file env.yml;
-    else
-      conda create -q -n test-environment python=$PYTHON pysam=0.15 numpy scipy matplotlib=3.3 wkhtmltopdf pdfkit markdown;
-    fi
+  - conda env create -n test-environment --file env.minimal.yml;
   - source activate test-environment
   - python --version
-  - python setup.py install
+  - pip install --no-deps -e .
 script:
   - python -m unittest discover tests
