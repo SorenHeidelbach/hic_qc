@@ -1,0 +1,15 @@
+[project]
+name = "hic_qc"
+description = "Quality assessment for Hi-C libraries"
+dynamic = ["version"]
+
+[build-system]
+requires = ["setuptools >= 64.0.0", "setuptools-git-versioning<2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools-git-versioning]
+enabled = true
+template = "v{tag}"
